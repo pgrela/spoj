@@ -8,11 +8,16 @@ public class Main {
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
+    private long[] numberAAsLong = new long[1200];
+    private long[] numberBAsLong = new long[1200];
+    private long[] resultAsLong = new long[2400];
+    private char[] reversedResultAsChar = new char[24000];
+
     public static void main(String[] args) throws IOException {
         new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
     }
 
-    public Main(Reader inputStreamReader, OutputStream out) {
+    public Main(Reader inputStreamReader, OutputStream out) throws IOException {
         inputStream = new BufferedReader(inputStreamReader);
         outputStream = new PrintStream(out);
     }
@@ -22,12 +27,14 @@ public class Main {
 
         for (int i = 0; i < testCases; i++) {
             String[] numbers = inputStream.readLine().split(" ");
-            String result = multiply(numbers[0], numbers[1]);
+            char[] result = multiply(numbers[0], numbers[1]);
             outputStream.println(result);
         }
+        outputStream.flush();
+        outputStream.close();
     }
 
-    protected String multiply(String numberA, String numberB) {
+    protected char[] multiply(String numberA, String numberB) {
         boolean resultIsPositive = true;
         if (numberA.startsWith("-")) {
             resultIsPositive = false;
@@ -37,60 +44,87 @@ public class Main {
             resultIsPositive = !resultIsPositive;
             numberB = numberB.replace("-", "");
         }
-        long[] numberAConvertedToBase10To9 = convertToBase10To9(numberA);
-        long[] numberBConvertedToBase10To9 = convertToBase10To9(numberB);
-        long[] resultInBase10To9 = multiply(numberAConvertedToBase10To9, numberBConvertedToBase10To9);
-        String stringResult = convertToString(resultInBase10To9);
-        if (!resultIsPositive)
-            stringResult = "-" + stringResult;
-        return stringResult;
+        int lengthOfNumberAInBase10To9 = convertToBase10To9(numberA, numberAAsLong);
+        int lengthOfNumberBInBase10To9 = convertToBase10To9(numberB, numberBAsLong);
+        long[] resultInBase10To9 = multiply(numberAAsLong, lengthOfNumberAInBase10To9, numberBAsLong, lengthOfNumberBInBase10To9);
+        return convertToCharArray(resultInBase10To9, resultIsPositive);
     }
 
-    protected String convertToString(long[] numberInBase10To9) {
+    protected char[] convertToCharArray(long[] numberInBase10To9, boolean resultIsPositive) {
         int resultLength = numberInBase10To9.length * 9;
-        StringBuffer stringBuffer = new StringBuffer(String.format("%" + resultLength + "s", "").replace(" ", "0"));
         for (int i = 0; i < numberInBase10To9.length; i++) {
-            String partialNumber = String.valueOf(numberInBase10To9[numberInBase10To9.length - i - 1]);
-            int endPosition = i * 9 + 9;
-            int insertPosition = endPosition - partialNumber.length();
-            stringBuffer.replace(insertPosition, endPosition, partialNumber);
+            int numberToWrite = (int) numberInBase10To9[i];
+            int currentBaseIndex = i * 9;
+            for (int j = 0; j < 9; j++) {
+                reversedResultAsChar[currentBaseIndex + j] = Character.forDigit(numberToWrite % 10, 10);
+                numberToWrite /= 10;
+            }
         }
-        return stringBuffer.toString().replaceFirst("^0+(?!$)", "");
+        int leadingZeroes = 0;
+        for (int i = resultLength - 1; i >= 0; i--) {
+            if (reversedResultAsChar[i] == '0') {
+                ++leadingZeroes;
+            } else {
+                break;
+            }
+        }
+        resultLength = resultLength - leadingZeroes;
+        if (!resultIsPositive) {
+            reversedResultAsChar[resultLength] = '-';
+            resultLength++;
+        }
+        char[] result = new char[resultLength];
+        for (int i = 0; i < resultLength; i++) {
+            result[i] = reversedResultAsChar[resultLength - i - 1];
+        }
+        return result;
     }
 
-    protected long[] multiply(long[] numberA, long[] numberB) {
-        int resultLength = numberA.length + numberB.length;
-        long[] result = new long[resultLength];
-        for (int i = 0; i < numberA.length; i++) {
-            for (int j = 0; j < numberB.length; j++) {
+    protected long[] multiply(long[] numberA, int lengthOfNumberAInBase10To9, long[] numberB, int lengthOfNumberBInBase10To9) {
+        int resultLength = lengthOfNumberAInBase10To9 + lengthOfNumberBInBase10To9;
+        for (int i = 0; i < resultLength; i++) {
+            resultAsLong[i] = 0;
+        }
+        for (int i = 0; i < lengthOfNumberAInBase10To9; i++) {
+            for (int j = 0; j < lengthOfNumberBInBase10To9; j++) {
                 long singleMultiplicationResult = numberA[i] * numberB[j];
-                result[i + j] += singleMultiplicationResult % TEN_TO_9;
-                result[i + j + 1] += singleMultiplicationResult / TEN_TO_9 + result[i + j] / TEN_TO_9;
-                result[i + j] %= TEN_TO_9;
-                int possibleOverFlow = i + j + 1;
-                while (result[possibleOverFlow] >= TEN_TO_9) {
-                    result[possibleOverFlow + 1] += result[possibleOverFlow] / TEN_TO_9;
-                    result[possibleOverFlow] %= TEN_TO_9;
-                    ++possibleOverFlow;
-                }
+                resultAsLong[i + j] += singleMultiplicationResult % TEN_TO_9;
+                resultAsLong[i + j + 1] += singleMultiplicationResult / TEN_TO_9 + resultAsLong[i + j] / TEN_TO_9;
+                resultAsLong[i + j] %= TEN_TO_9;
             }
         }
-        return result;
+        for (int i = 0; i < resultLength-1; i++) {
+            resultAsLong[i + 1] += resultAsLong[i] / TEN_TO_9;
+            resultAsLong[i] %= TEN_TO_9;
+        }
+        return resultAsLong;
     }
 
-    protected long[] convertToBase10To9(String number) {
+    protected int convertToBase10To9(String number, long[] result) {
+        char[] numberAsCharArray = number.toCharArray();
+        reverse(numberAsCharArray);
         int digitsInBase10To9 = (number.length() + 8) / 9;
-        long[] result = new long[digitsInBase10To9];
-        {
-            int lastDigitIndex = number.length();
-            int firstDigitIndex = Math.max(0, lastDigitIndex - 9);
-            for (int i = 0; i < digitsInBase10To9; i++) {
-                result[i] = Long.parseLong(number.substring(firstDigitIndex, lastDigitIndex));
-                firstDigitIndex -= 9;
-                lastDigitIndex -= 9;
-                firstDigitIndex = Math.max(0, firstDigitIndex);
+        for (int i = 0; i < digitsInBase10To9; i++) {
+            long digitInBase10To9 = 0;
+            long exponent = 1;
+            int firstDigitToReadIndex = i * 9;
+            int nextNumberDigitToReadIndex = Math.min(firstDigitToReadIndex + 9, number.length());
+            for (int j = firstDigitToReadIndex; j < nextNumberDigitToReadIndex; j++) {
+                digitInBase10To9 += exponent * Character.digit(numberAsCharArray[j], 10);
+                exponent *= 10;
             }
+            result[i] = digitInBase10To9;
         }
-        return result;
+        return digitsInBase10To9;
+    }
+
+    private void reverse(char[] array) {
+        if (array.length < 2) return;
+        int halfLength = array.length / 2;
+        for (int i = 0; i < halfLength; i++) {
+            char tmp = array[i];
+            array[i] = array[array.length - 1 - i];
+            array[array.length - 1 - i] = tmp;
+        }
     }
 }
