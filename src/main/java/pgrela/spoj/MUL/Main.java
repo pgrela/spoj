@@ -5,13 +5,14 @@ import java.io.*;
 public class Main {
 
     public static final int TEN_TO_9 = 1000000000;
+    public static final int BASE = 9;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
-    private long[] numberAAsLong = new long[1200];
-    private long[] numberBAsLong = new long[1200];
-    private long[] resultAsLong = new long[2400];
-    private char[] reversedResultAsChar = new char[24000];
+    private long[] numberAAsLong = new long[1500];
+    private long[] numberBAsLong = new long[1500];
+    private long[] resultAsLong = new long[3000];
+    private char[] reversedResultAsChar = new char[30000];
 
     public static void main(String[] args) throws IOException {
         new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
@@ -51,11 +52,11 @@ public class Main {
     }
 
     protected char[] convertToCharArray(long[] numberInBase10To9, boolean resultIsPositive) {
-        int resultLength = numberInBase10To9.length * 9;
+        int resultLength = numberInBase10To9.length * BASE;
         for (int i = 0; i < numberInBase10To9.length; i++) {
             int numberToWrite = (int) numberInBase10To9[i];
-            int currentBaseIndex = i * 9;
-            for (int j = 0; j < 9; j++) {
+            int currentBaseIndex = i * BASE;
+            for (int j = 0; j < BASE; j++) {
                 reversedResultAsChar[currentBaseIndex + j] = Character.forDigit(numberToWrite % 10, 10);
                 numberToWrite /= 10;
             }
@@ -89,8 +90,7 @@ public class Main {
             for (int j = 0; j < lengthOfNumberBInBase10To9; j++) {
                 long singleMultiplicationResult = numberA[i] * numberB[j];
                 resultAsLong[i + j] += singleMultiplicationResult % TEN_TO_9;
-                resultAsLong[i + j + 1] += singleMultiplicationResult / TEN_TO_9 + resultAsLong[i + j] / TEN_TO_9;
-                resultAsLong[i + j] %= TEN_TO_9;
+                resultAsLong[i + j + 1] += singleMultiplicationResult / TEN_TO_9;
             }
         }
         for (int i = 0; i < resultLength-1; i++) {
@@ -103,12 +103,12 @@ public class Main {
     protected int convertToBase10To9(String number, long[] result) {
         char[] numberAsCharArray = number.toCharArray();
         reverse(numberAsCharArray);
-        int digitsInBase10To9 = (number.length() + 8) / 9;
+        int digitsInBase10To9 = (number.length() + BASE-1) / BASE;
         for (int i = 0; i < digitsInBase10To9; i++) {
             long digitInBase10To9 = 0;
             long exponent = 1;
-            int firstDigitToReadIndex = i * 9;
-            int nextNumberDigitToReadIndex = Math.min(firstDigitToReadIndex + 9, number.length());
+            int firstDigitToReadIndex = i * BASE;
+            int nextNumberDigitToReadIndex = Math.min(firstDigitToReadIndex + BASE, number.length());
             for (int j = firstDigitToReadIndex; j < nextNumberDigitToReadIndex; j++) {
                 digitInBase10To9 += exponent * Character.digit(numberAsCharArray[j], 10);
                 exponent *= 10;

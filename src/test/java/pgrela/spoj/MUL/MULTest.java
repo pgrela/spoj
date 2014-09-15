@@ -14,6 +14,7 @@ import java.util.Random;
 public class MULTest {
 
     private StringBuffer input;
+    private StringBuffer output;
 
     @Test
     @Parameters(
@@ -73,16 +74,31 @@ public class MULTest {
     @Before
     public void before(){
         int testCases=1000;
-        char[] nines=new char[10000];
-        for (int i = 0; i < 10000; i++) {
+        int numberLenths=10000;
+        char[] nines=new char[numberLenths];
+        for (int i = 0; i < numberLenths; i++) {
             nines[i]='9';
         }
         input = new StringBuffer();
+        this.output= new StringBuffer();
         input.append(testCases).append('\n');
         for (int i = 0; i < testCases; i++) {
             input.append(nines).append(' ').append(nines).append('\n');
         }
 
+        StringBuffer output = new StringBuffer();
+        for (int i = 0; i < numberLenths-1; i++) {
+            output.append('9');
+        }
+        output.append('8');
+        for (int i = 0; i < numberLenths-1; i++) {
+            output.append('0');
+        }
+        output.append('1');
+        output.append('\n');
+        for (int i = 0; i < testCases; i++) {
+            this.output.append(output);
+        }
     }
     @Test
     public void maxInputTest() throws IOException {
@@ -90,6 +106,6 @@ public class MULTest {
         Main main = new Main(new StringReader(input.toString()),output);
         main.solve();
 
-        Assertions.assertThat(output.toString().trim()).isEqualTo("6");
+        Assertions.assertThat(output.toString()).isEqualTo(output.toString());
     }
 }
