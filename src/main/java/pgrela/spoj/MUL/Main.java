@@ -4,7 +4,7 @@ import java.io.*;
 
 public class Main {
 
-    public static final int TEN_TO_9 = 1000000000;
+    public static final long TEN_TO_9 = 1000*1000*1000;
     public static final int BASE = 9;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
@@ -86,11 +86,12 @@ public class Main {
         for (int i = 0; i < resultLength; i++) {
             resultAsLong[i] = 0;
         }
-        for (int i = 0; i < lengthOfNumberAInBase10To9; i++) {
-            for (int j = 0; j < lengthOfNumberBInBase10To9; j++) {
+        for (int i = 0; i < lengthOfNumberAInBase10To9; ++i) {
+            for (int j = 0; j < lengthOfNumberBInBase10To9; ++j) {
                 long singleMultiplicationResult = numberA[i] * numberB[j];
-                resultAsLong[i + j] += singleMultiplicationResult % TEN_TO_9;
-                resultAsLong[i + j + 1] += singleMultiplicationResult / TEN_TO_9;
+                int precomputedIndex = i+j;
+                resultAsLong[precomputedIndex] += singleMultiplicationResult % TEN_TO_9;
+                resultAsLong[precomputedIndex + 1] += singleMultiplicationResult / TEN_TO_9;
             }
         }
         for (int i = 0; i < resultLength-1; i++) {
