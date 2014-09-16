@@ -9,7 +9,7 @@ import junitparams.Parameters;
 import pgrela.spoj.common.AbstractMainTest;
 
 @RunWith(JUnitParamsRunner.class)
-public class MainTest extends AbstractMainTest {
+public class GNYR09FTest extends AbstractMainTest {
 
 
     @Test
@@ -44,7 +44,7 @@ public class MainTest extends AbstractMainTest {
         Main main = mainClassFactory.getMain(Main.class);
 
         //when
-        int combinationsCount = main.adjecentBitPairs(numberLength, requestedBitPairs);
+        int combinationsCount = main.adjacentBitPairs(numberLength, requestedBitPairs);
 
         //then
         Assertions.assertThat(combinationsCount).isEqualTo(expectedCombinationsCount);

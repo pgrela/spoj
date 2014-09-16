@@ -1,8 +1,17 @@
 package pgrela.spoj.MUL;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.io.Reader;
 
-public class Main {
+/**
+ * This approach failed as it turned out to be too slow when implemented in java.
+ */
+public class SquaredMultiplicationInBase10To9 {
 
     public static final long TEN_TO_9 = 1000*1000*1000;
     public static final int BASE = 9;
@@ -15,10 +24,10 @@ public class Main {
     private char[] reversedResultAsChar = new char[30000];
 
     public static void main(String[] args) throws IOException {
-        new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
+        new SquaredMultiplicationInBase10To9(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
     }
 
-    public Main(Reader inputStreamReader, OutputStream out) throws IOException {
+    public SquaredMultiplicationInBase10To9(Reader inputStreamReader, OutputStream out) throws IOException {
         inputStream = new BufferedReader(inputStreamReader);
         outputStream = new PrintStream(out);
     }
@@ -83,13 +92,22 @@ public class Main {
 
     protected long[] multiply(long[] numberA, int lengthOfNumberAInBase10To9, long[] numberB, int lengthOfNumberBInBase10To9) {
         int resultLength = lengthOfNumberAInBase10To9 + lengthOfNumberBInBase10To9;
-
-        /*long[] numberAInPointValuesFormat = convertToInPointValueFormat(numberA);
-        long[] numberBInPointValuesFormat = convertToInPointValueFormat(numberB);
-        long[] resultInPointValuesFormat = multiplyInPointValuesFormat(numberAInPointValuesFormat,
-                numberBInPointValuesFormat);
-        long[] result = convertToBase10To9(resultInPointValuesFormat);
-        return result;                                                */return null;
+        for (int i = 0; i < resultLength; i++) {
+            resultAsLong[i] = 0;
+        }
+        for (int i = 0; i < lengthOfNumberAInBase10To9; ++i) {
+            for (int j = 0; j < lengthOfNumberBInBase10To9; ++j) {
+                long singleMultiplicationResult = numberA[i] * numberB[j];
+                int precomputedIndex = i+j;
+                resultAsLong[precomputedIndex] += singleMultiplicationResult % TEN_TO_9;
+                resultAsLong[precomputedIndex + 1] += singleMultiplicationResult / TEN_TO_9;
+            }
+        }
+        for (int i = 0; i < resultLength-1; i++) {
+            resultAsLong[i + 1] += resultAsLong[i] / TEN_TO_9;
+            resultAsLong[i] %= TEN_TO_9;
+        }
+        return resultAsLong;
     }
 
     protected int convertToBase10To9(String number, long[] result) {

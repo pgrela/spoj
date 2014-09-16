@@ -10,6 +10,7 @@ import java.io.Reader;
 
 public class Main {
     public static final int CACHE_SIZE = 101;
+    int[][] cache;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
@@ -20,6 +21,13 @@ public class Main {
     public Main(Reader inputStreamReader, OutputStream out) throws IOException {
         inputStream = new BufferedReader(inputStreamReader);
         outputStream = new PrintStream(out);
+
+        initiateCache();
+    }
+
+    private void initiateCache() {
+        cache = new int[CACHE_SIZE][CACHE_SIZE];
+
         for (int i = 0; i < CACHE_SIZE; i++) {
             for (int j = 0; j < CACHE_SIZE; j++) {
                 cache[i][j] = -1;
@@ -28,20 +36,36 @@ public class Main {
     }
 
     protected void solve() throws IOException {
-        int testCases = Integer.parseInt(inputStream.readLine());
+        int testCases = readLineWithSingleInt();
 
         for (int i = 0; i < testCases; i++) {
-            String[] numbers = inputStream.readLine().split(" ");
-            outputStream.println(numbers[0] + " " + adjecentBitPairs(Integer.parseInt(numbers[1]),
-                    Integer.parseInt(numbers[2])));
+            solveSingleTestCase();
         }
         outputStream.flush();
         outputStream.close();
     }
 
-    int[][] cache = new int[CACHE_SIZE][CACHE_SIZE];
+    private void solveSingleTestCase() throws IOException {
+        TestCase testCase = readTestCase();
 
-    protected int adjecentBitPairs(int length, int pairs) {
+        int solution = adjacentBitPairs(testCase.getNumberLength(),testCase.getRequiredAdjacentBitPairs());
+
+        outputStream.println(testCase.getTestCaseNo() + " " + solution);
+    }
+
+    private int readLineWithSingleInt() throws IOException {
+        return Integer.parseInt(inputStream.readLine());
+    }
+
+    private TestCase readTestCase() throws IOException {
+        String numbers[] = inputStream.readLine().split(" ");
+        String testCaseNo = numbers[0];
+        int numberLength = Integer.parseInt(numbers[1]);
+        int pairs = Integer.parseInt(numbers[2]);
+        return new TestCase(testCaseNo, numberLength, pairs);
+    }
+
+    protected int adjacentBitPairs(int length, int pairs) {
         if (cache[length][pairs] != -1) {
             return cache[length][pairs];
         }
@@ -55,9 +79,9 @@ public class Main {
         if (length == 1 && pairs == 0) {
             return 2;
         }
-        int result = adjecentBitPairs(length - 1, pairs)
+        int result = adjacentBitPairs(length - 1, pairs)
                 + adjacentPairsStartingWithOne(length - 1, pairs - 1)
-                + adjecentBitPairs(length - 2, pairs);
+                + adjacentBitPairs(length - 2, pairs);
         cache[length][pairs] = result;
         return result;
     }
@@ -70,7 +94,7 @@ public class Main {
             return 0;
         }
         return adjacentPairsStartingWithOne(length - 1, pairs - 1)
-                + adjecentBitPairs(length - 2, pairs);
+                + adjacentBitPairs(length - 2, pairs);
     }
 
     private boolean isPossible(int length, int pairs) {
@@ -84,5 +108,28 @@ public class Main {
             return false;
         }
         return true;
+    }
+    class TestCase{
+        String testCaseNo;
+        int numberLength;
+        int requiredAdjacentBitPairs;
+
+        TestCase(String testCaseNo, int numberLentgh, int requiredAdjacentBitPairs) {
+            this.testCaseNo = testCaseNo;
+            this.numberLength = numberLentgh;
+            this.requiredAdjacentBitPairs = requiredAdjacentBitPairs;
+        }
+
+        public String getTestCaseNo() {
+            return testCaseNo;
+        }
+
+        public int getNumberLength() {
+            return numberLength;
+        }
+
+        public int getRequiredAdjacentBitPairs() {
+            return requiredAdjacentBitPairs;
+        }
     }
 }
