@@ -1,17 +1,21 @@
 package pgrela.spoj.MUL;
 
-import junitparams.JUnitParamsRunner;
-import junitparams.Parameters;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.Random;
+
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.io.*;
-import java.util.Random;
+import junitparams.JUnitParamsRunner;
+import junitparams.Parameters;
+import pgrela.spoj.common.AbstractMainTest;
 
 @RunWith(JUnitParamsRunner.class)
-public class MULTest {
+public class MULTest extends AbstractMainTest{
 
     private StringBuffer input;
     private StringBuffer output;
@@ -27,7 +31,7 @@ public class MULTest {
         //given
 
         //when
-        String computedResult = new String(getMain().multiply(numberA, numberB));
+        String computedResult = new String(mainClassFactory.getMain(Main.class).multiply(numberA, numberB));
 
         Assertions.assertThat(computedResult).isEqualTo(expectedResult);
     }
@@ -37,14 +41,11 @@ public class MULTest {
 
         //when
         long[] computedResult = new long[100];
-        getMain().convertToBase10To9("1234123456789123456789", computedResult);
+        mainClassFactory.getMain(Main.class).convertToBase10To9("1234123456789123456789", computedResult);
 
         Assertions.assertThat(computedResult).startsWith(123456789, 123456789, 1234);
     }
 
-    private Main getMain() throws IOException {
-        return new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out));
-    }
 
     @Test
     public void IOTest() throws IOException {
@@ -61,7 +62,7 @@ public class MULTest {
     //@Test
     public void stressTest() throws IOException {
         Random r=new Random();
-        Main main = getMain();
+        Main main = mainClassFactory.getMain(Main.class);
         int fakeResult=0;
         while(true){
             String numberA = String.valueOf(r.nextInt(100000));
@@ -100,7 +101,7 @@ public class MULTest {
             this.output.append(output);
         }
     }
-    @Test
+    //@Test
     public void maxInputTest() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         Main main = new Main(new StringReader(input.toString()),output);
