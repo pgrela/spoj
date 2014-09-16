@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Main {
     public static final int MAX_BOARD_LENGTH = 801;
@@ -15,6 +17,7 @@ public class Main {
     private Boolean[] boardsWithoutTwoCorners;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
+    private Map<BoardShape, Boolean[]> cacheForShape;
 
     public static void main(String[] args) throws Exception {
         new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
@@ -26,13 +29,17 @@ public class Main {
         straightBoards = new Boolean[MAX_BOARD_LENGTH];
         boardsWithoutOneCorner = new Boolean[MAX_BOARD_LENGTH];
         boardsWithoutTwoCorners = new Boolean[MAX_BOARD_LENGTH];
+        cacheForShape = new HashMap<BoardShape, Boolean[]>();
+        cacheForShape.put(BoardShape.STRAIGHT, straightBoards);
+        cacheForShape.put(BoardShape.ONE_CORNER, boardsWithoutOneCorner);
+        cacheForShape.put(BoardShape.TWO_CORNES, boardsWithoutTwoCorners);
     }
 
     protected void solve() throws IOException {
         int testCases = readInt();
         for (int i = 0; i < testCases; i++) {
             int boardLength = readInt();
-            boolean result = isPossibleToWinABoard(boardLength);
+            boolean result = isBoardPossibleToWin(BoardShape.STRAIGHT, boardLength);
             outputStream.println(result ? "X" : "Y");
         }
 
@@ -40,24 +47,50 @@ public class Main {
         outputStream.close();
     }
 
-    private boolean isPossibleToWinABoard(int boardLength) {
-        if (straightBoards[boardLength] != null) {
-            return straightBoards[boardLength];
+    private boolean isBoardPossibleToWin(BoardShape shape, int boardLengthWithCorners) {
+        Boolean[] cache = cacheForShape.get(shape);
+        if (cache[boardLengthWithCorners] != null) {
+            return cache[boardLengthWithCorners];
         }
-        if (boardLength < 2) {
-            return cacheResult(false, straightBoards, boardLength);
+        if (boardLengthWithCorners < 2) {
+            return cacheResult(false, cache, boardLengthWithCorners);
         }
-        if (boardLength < 4) {
-            return cacheResult(true, straightBoards, boardLength);
+        if (boardLengthWithCorners < 4) {
+            return cacheResult(true, cache, boardLengthWithCorners);
         }
-        for (int i = 0; i < boardLength; i++) {
-            boolean isLeftBoardPossibleToWin = isPossibleToWinABoard(i);
-            boolean isRightBoardPossibleToWin = isPossibleToWinABorderWithoutOneCorner(boardLength - i - 1);
+        boolean result = false;
+        switch (shape) {
+            case STRAIGHT:
+                result = isPossibleToWinBoardAfterSplit(boardLengthWithCorners, BoardShape.STRAIGHT,
+                        BoardShape.ONE_CORNER);
+                break;
+            case ONE_CORNER:
+                result = isPossibleToWinBoardAfterSplit(boardLengthWithCorners, BoardShape.STRAIGHT,
+                        BoardShape.TWO_CORNES);
+                if (!result) {
+                    result = isPossibleToWinBoardAfterSplit(boardLengthWithCorners, BoardShape.ONE_CORNER,
+                            BoardShape.ONE_CORNER);
+                }
+                break;
+            case TWO_CORNES:
+                result = isPossibleToWinBoardAfterSplit(boardLengthWithCorners, BoardShape.TWO_CORNES,
+                        BoardShape.ONE_CORNER);
+                break;
+        }
+        return cacheResult(result, cache, boardLengthWithCorners);
+    }
+
+    private boolean isPossibleToWinBoardAfterSplit(int boardLengthWithCorners, BoardShape leftBoardShape,
+                                                   BoardShape rightBoardShape) {
+
+        for (int i = 0; i < boardLengthWithCorners; i++) {
+            boolean isLeftBoardPossibleToWin = isBoardPossibleToWin(leftBoardShape, i);
+            boolean isRightBoardPossibleToWin = isBoardPossibleToWin(rightBoardShape, boardLengthWithCorners - 1 - i);
             if (isLeftBoardPossibleToWin == isRightBoardPossibleToWin) {
-                return cacheResult(true, straightBoards, boardLength);
+                return true;
             }
         }
-        return cacheResult(false, straightBoards, boardLength);
+        return false;
     }
 
     private boolean cacheResult(boolean result, Boolean[] cache, int position) {
@@ -65,51 +98,8 @@ public class Main {
         return result;
     }
 
-    private boolean isPossibleToWinABorderWithoutOneCorner(int boardLengthIncludingCorner) {
-        if (boardsWithoutOneCorner[boardLengthIncludingCorner] != null) {
-            return boardsWithoutOneCorner[boardLengthIncludingCorner];
-        }
-        if (boardLengthIncludingCorner < 2) {
-            return cacheResult(false, boardsWithoutOneCorner, boardLengthIncludingCorner);
-        }
-        if (boardLengthIncludingCorner < 4) {
-            return cacheResult(true, boardsWithoutOneCorner, boardLengthIncludingCorner);
-        }
-        for (int i = 0; i < boardLengthIncludingCorner; i++) {
-            boolean isLeftBoardPossibleToWin = isPossibleToWinABoard(i);
-            boolean isRightBoardPossibleToWin = isPossibleToWinABorderWithoutTwoCorners(
-                    boardLengthIncludingCorner - i - 1);
-            if (isLeftBoardPossibleToWin == isRightBoardPossibleToWin) {
-                return cacheResult(true, boardsWithoutOneCorner, boardLengthIncludingCorner);
-            }
-            isLeftBoardPossibleToWin = isPossibleToWinABorderWithoutOneCorner(i);
-            isRightBoardPossibleToWin = isPossibleToWinABorderWithoutOneCorner(boardLengthIncludingCorner - i - 1);
-            if (isLeftBoardPossibleToWin == isRightBoardPossibleToWin) {
-                return cacheResult(true, boardsWithoutOneCorner, boardLengthIncludingCorner);
-            }
-        }
-        return cacheResult(false, boardsWithoutOneCorner, boardLengthIncludingCorner);
-    }
-
-    private boolean isPossibleToWinABorderWithoutTwoCorners(int boardLengthIncludingCorners) {
-        if (boardsWithoutTwoCorners[boardLengthIncludingCorners] != null) {
-            return boardsWithoutTwoCorners[boardLengthIncludingCorners];
-        }
-        if (boardLengthIncludingCorners < 2) {
-            return cacheResult(false, boardsWithoutTwoCorners, boardLengthIncludingCorners);
-        }
-        if (boardLengthIncludingCorners < 4) {
-            return cacheResult(true, boardsWithoutTwoCorners, boardLengthIncludingCorners);
-        }
-        for (int i = 0; i < boardLengthIncludingCorners; i++) {
-            boolean isLeftBoardPossibleToWin = isPossibleToWinABorderWithoutOneCorner(i);
-            boolean isRightBoardPossibleToWin = isPossibleToWinABorderWithoutTwoCorners(boardLengthIncludingCorners -
-                    i - 1);
-            if (isLeftBoardPossibleToWin == isRightBoardPossibleToWin) {
-                return cacheResult(true, boardsWithoutTwoCorners, boardLengthIncludingCorners);
-            }
-        }
-        return cacheResult(false, boardsWithoutTwoCorners, boardLengthIncludingCorners);
+    public static enum BoardShape {
+        STRAIGHT, ONE_CORNER, TWO_CORNES
     }
 
 
