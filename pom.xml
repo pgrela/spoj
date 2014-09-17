@@ -12,7 +12,7 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.9</version>
+            <version>4.12-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -26,6 +26,12 @@
             <artifactId>JUnitParams</artifactId>
             <version>1.0.2</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>junit</artifactId>
+                    <groupId>junit</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.google.inject</groupId>
