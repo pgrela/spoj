@@ -59,6 +59,6 @@ public class TRIOMINOTest extends AbstractMainTest {
         //when
         boolean isXAWinner = triominoSolver.isWinningPosition(input);
 
-        then(isXAWinner).isEqualTo(winner.equals("Y"));
+        then(isXAWinner).isEqualTo(winner.equals("X"));
     }
 }

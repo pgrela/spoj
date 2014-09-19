@@ -81,7 +81,7 @@ public class Main {
     }
 
     protected boolean isWinningPosition(int boardLength) {
-        return grundyNumbers[boardLength * 2] == 0;
+        return grundyNumbers[boardLength * 2] != 0;
     }
 
 

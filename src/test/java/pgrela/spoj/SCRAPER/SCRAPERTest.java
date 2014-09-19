@@ -35,9 +35,12 @@ public class SCRAPERTest extends AbstractMainTest {
             }
     )
     public void shouldWorkWithSampleInput(String input, String expectedOutput) throws IOException {
+        //given
         ByteArrayOutputStream output = new ByteArrayOutputStream();
+        Main scraperSolver = mainClassFactory.getMain(Main.class, new StringReader(input), output);
 
-        mainClassFactory.getMain(Main.class, new StringReader(input), output).solve();
+        //when
+        scraperSolver.solve();
 
         then(output.toString()).isEqualTo(expectedOutput);
     }
@@ -49,9 +52,11 @@ public class SCRAPERTest extends AbstractMainTest {
             }
     )
     public void shouldComputeGCD(int a, int b, int expectedGcd) throws IOException {
+        //given
+        Main scraperSolver = mainClassFactory.getMain(Main.class);
 
         //when
-        long gcd = mainClassFactory.getMain(Main.class).gcd(a, b);
+        long gcd = scraperSolver.gcd(a, b);
 
         then(gcd).isEqualTo(expectedGcd);
     }
@@ -72,7 +77,7 @@ public class SCRAPERTest extends AbstractMainTest {
         then((inverseModulo * number + modulo * modulo) % modulo).isEqualTo(1);
     }
 
-    public Object[] minimalTestCases() {
+    public Object[] elevatorCommonFloorTestCases() {
         return $(
                 $(new Elevator(1L, 7L), new Elevator(100L, 17L), 134L),
                 $(new Elevator(2, 14), new Elevator(200, 34), 268L),
@@ -89,7 +94,7 @@ public class SCRAPERTest extends AbstractMainTest {
     }
 
     @Test
-    @Parameters(method = "minimalTestCases")
+    @Parameters(method = "elevatorCommonFloorTestCases")
     public void shouldWorkForTestCase(Elevator firstElevator, Elevator otherElevator,
                                       Long expectedCommonFloor) throws IOException {
         //given
@@ -101,31 +106,31 @@ public class SCRAPERTest extends AbstractMainTest {
         then(commonFloor).isEqualTo(expectedCommonFloor);
     }
 
-    public Object[] testCases() {
+    public Object[] fullScraperTestCases() {
         return $(
-//                $(SkyscraperBuilder.builder()
-//                                .withHeight(100)
-//                                .withStart(0)
-//                                .withTarget(1)
-//                                .withElevators(
-//                                        builder().withStart(0).withFrequency(3).build(),
-//                                        builder().withStart(1).withFrequency(97).build()
-//                                )
-//                                .build()
-//                        , false
-//                ),
-//                $(SkyscraperBuilder.builder()
-//                                .withHeight(100)
-//                                .withStart(0)
-//                                .withTarget(2)
-//                                .withElevators(
-//                                        builder().withStart(100).withFrequency(2).build(),
-//                                        builder().withStart(0).withFrequency(8).build(),
-//                                        builder().withStart(2).withFrequency(29).build()
-//                                )
-//                                .build()
-//                        , false
-//                ),
+                $(SkyscraperBuilder.builder()
+                                .withHeight(100)
+                                .withStart(0)
+                                .withTarget(1)
+                                .withElevators(
+                                        builder().withStart(0).withFrequency(3).build(),
+                                        builder().withStart(1).withFrequency(97).build()
+                                )
+                                .build()
+                        , false
+                ),
+                $(SkyscraperBuilder.builder()
+                                .withHeight(100)
+                                .withStart(0)
+                                .withTarget(2)
+                                .withElevators(
+                                        builder().withStart(100).withFrequency(2).build(),
+                                        builder().withStart(0).withFrequency(8).build(),
+                                        builder().withStart(2).withFrequency(29).build()
+                                )
+                                .build()
+                        , false
+                ),
                 $(SkyscraperBuilder.builder()
                                 .withHeight(100)
                                 .withStart(0)
@@ -140,7 +145,7 @@ public class SCRAPERTest extends AbstractMainTest {
     }
 
     @Test
-    @Parameters(method = "testCases")
+    @Parameters(method = "fullScraperTestCases")
     public void shouldWorkForTestCaseSky(Main.Skyscraper skyscraper, boolean isExpectedToBePossible) throws IOException {
         //given
         Main scraperSolver = mainClassFactory.getMain(Main.class);
