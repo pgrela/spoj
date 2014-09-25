@@ -1,5 +1,7 @@
 package pgrela.spoj.MUL;
 
+import static org.assertj.core.api.BDDAssertions.then;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -108,5 +110,71 @@ public class MULTest extends AbstractMainTest{
         main.solve();
 
         Assertions.assertThat(output.toString()).isEqualTo(output.toString());
+    }
+
+    @Test
+    @Parameters(
+            {
+                    //"5,4",
+                    //"59,21",
+                    "89,11",//,
+                    "64,7",//,
+                    "134217728,7",
+                    "536870912,233",
+                    "655360001,10000"//,
+                    //"59,43",
+                    //"59,44",
+                    //"59,45"
+            }
+    )
+    public void shouldComputeNthRootOfUnity(int modulo, int nth){
+        Main mulSolver = mainClassFactory.getMain(Main.class);
+
+        long root = mulSolver.nthRootOfUnity(nth, modulo);
+
+        then(verifyRoot(root, modulo, nth)).isEqualTo(true);
+    }
+
+    private boolean verifyRoot(long root, long modulo, long nth) {
+        long k=root;
+        for (long i = 1; i < nth; i++) {
+            if(k==1){
+                return false;
+            }
+            k=k*root%modulo;
+        }
+        return k==1;
+    }
+
+    @Test
+    public void shouldMultiplySmallNumbers(){
+        //given
+        Main mulSolver = mainClassFactory.getMain(Main.class);
+
+        //when
+        long[] root = mulSolver.multiply(new long[]{2},new long[]{3});
+
+        then(root[0]).isEqualTo(6L);
+    }
+
+    @Test
+    public void shouldMultiplyNotThatSmallNumbers(){
+        //given
+        Main mulSolver = mainClassFactory.getMain(Main.class);
+
+        //when
+        long[] root = mulSolver.multiply(new long[]{1,2},new long[]{4,3});
+
+        then(root).contains(4,0).contains(1,1).contains(7,2);
+    }
+    @Test
+    public void shouldMultiplyNotThatSmallNumbers2(){
+        //given
+        Main mulSolver = mainClassFactory.getMain(Main.class);
+
+        //when
+        long[] root = mulSolver.multiply(new long[]{1,2},new long[]{3});
+
+        then(root).contains(3,0).contains(6,1);
     }
 }
