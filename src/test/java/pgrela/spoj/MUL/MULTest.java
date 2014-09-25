@@ -1,6 +1,8 @@
 package pgrela.spoj.MUL;
 
+import static org.assertj.core.api.Assertions.atIndex;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.data.Index.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -8,7 +10,9 @@ import java.io.StringReader;
 import java.util.Random;
 
 import org.assertj.core.api.Assertions;
+import org.assertj.core.data.Index;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -42,8 +46,7 @@ public class MULTest extends AbstractMainTest{
         //given
 
         //when
-        long[] computedResult = new long[100];
-        mainClassFactory.getMain(Main.class).convertToBase10To9("1234123456789123456789", computedResult);
+        long[] computedResult = mainClassFactory.getMain(Main.class).convertToBase("1234123456789123456789", 9);
 
         Assertions.assertThat(computedResult).startsWith(123456789, 123456789, 1234);
     }
@@ -103,36 +106,13 @@ public class MULTest extends AbstractMainTest{
             this.output.append(output);
         }
     }
-    //@Test
+    @Test
     public void maxInputTest() throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         Main main = new Main(new StringReader(input.toString()),output);
         main.solve();
 
         Assertions.assertThat(output.toString()).isEqualTo(output.toString());
-    }
-
-    @Test
-    @Parameters(
-            {
-                    //"5,4",
-                    //"59,21",
-                    "89,11",//,
-                    "64,7",//,
-                    "134217728,7",
-                    "536870912,233",
-                    "655360001,10000"//,
-                    //"59,43",
-                    //"59,44",
-                    //"59,45"
-            }
-    )
-    public void shouldComputeNthRootOfUnity(int modulo, int nth){
-        Main mulSolver = mainClassFactory.getMain(Main.class);
-
-        long root = mulSolver.nthRootOfUnity(nth, modulo);
-
-        then(verifyRoot(root, modulo, nth)).isEqualTo(true);
     }
 
     private boolean verifyRoot(long root, long modulo, long nth) {
@@ -165,7 +145,7 @@ public class MULTest extends AbstractMainTest{
         //when
         long[] root = mulSolver.multiply(new long[]{1,2},new long[]{4,3});
 
-        then(root).contains(4,0).contains(1,1).contains(7,2);
+        then(root).contains(4, Index.atIndex(0)).contains(1,atIndex(1)).contains(7, atIndex(2));
     }
     @Test
     public void shouldMultiplyNotThatSmallNumbers2(){
@@ -173,8 +153,8 @@ public class MULTest extends AbstractMainTest{
         Main mulSolver = mainClassFactory.getMain(Main.class);
 
         //when
-        long[] root = mulSolver.multiply(new long[]{1,2},new long[]{3});
+        long[] root = mulSolver.multiply(new long[]{9,0},new long[]{0,9});
 
-        then(root).contains(3,0).contains(6,1);
+        then(root).contains(0, 0).contains(6,1).contains(6,1);
     }
 }

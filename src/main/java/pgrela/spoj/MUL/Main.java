@@ -14,16 +14,18 @@ import java.util.Random;
 
 public class Main {
 
-    public static final long TEN_TO_9 = 1000 * 1000 * 1000;
-    public static final int BASE = 9;
+    public final long tenToBase;
+    public static final int BASE_EXPONENT = 4;
+    public static final int MAX_NUMBER_LENGTH = 10000;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
-    private long[] numberAAsLong = new long[1500];
-    private long[] numberBAsLong = new long[1500];
-    private long[] resultAsLong = new long[3000];
-    private char[] reversedResultAsChar = new char[30000];
-    private List<Integer> primes;
+    private final long[] numberAAsLong;
+    private int resultLength;
+    private final long[] numberBAsLong;
+    private final long[] resultAsLong;
+    private final char[] reversedResultAsChar;
+    private final int maxNumberLength;
 
     public static void main(String[] args) throws IOException {
         new Main(new InputStreamReader(System.in), new BufferedOutputStream(System.out)).solve();
@@ -33,7 +35,12 @@ public class Main {
         inputStream = new BufferedReader(inputStreamReader);
         outputStream = new PrintStream(out);
 
-        primes = sitoEratostenesa(50000);
+        tenToBase = pow(10, BASE_EXPONENT);
+        maxNumberLength = resultLength(MAX_NUMBER_LENGTH / BASE_EXPONENT + 1);
+        numberAAsLong = new long[maxNumberLength];
+        numberBAsLong = new long[maxNumberLength];
+        resultAsLong = new long[maxNumberLength];
+        reversedResultAsChar = new char[33333];
     }
 
     protected void solve() throws IOException {
@@ -58,25 +65,24 @@ public class Main {
             resultIsPositive = !resultIsPositive;
             numberB = numberB.replace("-", "");
         }
-        int lengthOfNumberAInBase10To9 = convertToBase10To9(numberA, numberAAsLong);
-        int lengthOfNumberBInBase10To9 = convertToBase10To9(numberB, numberBAsLong);
-        long[] resultInBase10To9 = multiply(numberAAsLong, lengthOfNumberAInBase10To9, numberBAsLong,
-                lengthOfNumberBInBase10To9);
-        return convertToCharArray(resultInBase10To9, resultIsPositive);
+        long[] aInBase = convertToBase(numberA, BASE_EXPONENT);
+        long[] bInBase = convertToBase(numberB, BASE_EXPONENT);
+        long[] resultInBase = multiply(aInBase, bInBase);
+        return convertToCharArray(resultInBase, resultIsPositive);
     }
 
     protected char[] convertToCharArray(long[] numberInBase10To9, boolean resultIsPositive) {
-        int resultLength = numberInBase10To9.length * BASE;
+        int resultLength = numberInBase10To9.length * BASE_EXPONENT;
         for (int i = 0; i < numberInBase10To9.length; i++) {
             int numberToWrite = (int) numberInBase10To9[i];
-            int currentBaseIndex = i * BASE;
-            for (int j = 0; j < BASE; j++) {
+            int currentBaseIndex = i * BASE_EXPONENT;
+            for (int j = 0; j < BASE_EXPONENT; j++) {
                 reversedResultAsChar[currentBaseIndex + j] = Character.forDigit(numberToWrite % 10, 10);
                 numberToWrite /= 10;
             }
         }
         int leadingZeroes = 0;
-        for (int i = resultLength - 1; i >= 0; i--) {
+        for (int i = resultLength - 1; i > 0; i--) {
             if (reversedResultAsChar[i] == '0') {
                 ++leadingZeroes;
             } else {
@@ -95,34 +101,23 @@ public class Main {
         return result;
     }
 
-    protected long[] multiply(long[] numberA, int lengthOfNumberAInBase10To9, long[] numberB, int lengthOfNumberBInBase10To9) {
-        int resultLength = lengthOfNumberAInBase10To9 + lengthOfNumberBInBase10To9;
-
-        /*long[] numberAInPointValuesFormat = convertToInPointValueFormat(numberA);
-        long[] numberBInPointValuesFormat = convertToInPointValueFormat(numberB);
-        long[] resultInPointValuesFormat = multiplyInPointValuesFormat(numberAInPointValuesFormat,
-                numberBInPointValuesFormat);
-        long[] result = convertToBase10To9(resultInPointValuesFormat);
-        return result;                                                */
-        return null;
-    }
-
-    protected int convertToBase10To9(String number, long[] result) {
+    protected long[] convertToBase(String number, int chunkSize) {
         char[] numberAsCharArray = number.toCharArray();
         reverse(numberAsCharArray);
-        int digitsInBase10To9 = (number.length() + BASE - 1) / BASE;
-        for (int i = 0; i < digitsInBase10To9; i++) {
-            long digitInBase10To9 = 0;
+        int digitsInBase = (numberAsCharArray.length + chunkSize - 1) / chunkSize;
+        long[] result = new long[digitsInBase];
+        for (int i = 0; i < digitsInBase; i++) {
+            long digitInBase = 0;
             long exponent = 1;
-            int firstDigitToReadIndex = i * BASE;
-            int nextNumberDigitToReadIndex = Math.min(firstDigitToReadIndex + BASE, number.length());
+            int firstDigitToReadIndex = i * chunkSize;
+            int nextNumberDigitToReadIndex = Math.min(firstDigitToReadIndex + chunkSize, numberAsCharArray.length);
             for (int j = firstDigitToReadIndex; j < nextNumberDigitToReadIndex; j++) {
-                digitInBase10To9 += exponent * Character.digit(numberAsCharArray[j], 10);
+                digitInBase += exponent * Character.digit(numberAsCharArray[j], 10);
                 exponent *= 10;
             }
-            result[i] = digitInBase10To9;
+            result[i] = digitInBase;
         }
-        return digitsInBase10To9;
+        return result;
     }
 
     private void reverse(char[] array) {
@@ -133,60 +128,6 @@ public class Main {
             array[i] = array[array.length - 1 - i];
             array[array.length - 1 - i] = tmp;
         }
-    }
-
-    protected List<Integer> sitoEratostenesa(int size) {
-        boolean[] integers = new boolean[size];
-        List<Integer> primes = new ArrayList<Integer>();
-        for (int i = 2; i < integers.length; i++) {
-            if (!integers[i]) {
-                primes.add(i);
-                int forwardIndex = i * 2;
-                while (forwardIndex < integers.length) {
-                    integers[forwardIndex] = true;
-                    forwardIndex += i;
-                }
-            }
-        }
-        return primes;
-    }
-
-    protected long primitiveRootOfUnity(long modulo) {
-        Random random = new Random();
-        do {
-            long root = random.nextInt((int) modulo - 2) + 2;
-            if (exp(root, modulo - 1, modulo) != 1) {
-                continue;
-            }
-            int currentPrimeIndex = 0;
-            long factorizedRoot = root;
-            do {
-                long maxPossibleDivisor = (long) (Math.sqrt(factorizedRoot) + 1);
-                while (primes.get(currentPrimeIndex) < maxPossibleDivisor) {
-                    if (factorizedRoot % primes.get(currentPrimeIndex) == 0) {
-                        break;
-                    }
-                    ++currentPrimeIndex;
-                }
-                if (factorizedRoot % primes.get(currentPrimeIndex) != 0) {
-                    return root;
-                    //throw new RuntimeException();
-                }
-                factorizedRoot /= primes.get(currentPrimeIndex);
-                if (factorizedRoot == root) {
-                    return root;
-                }
-                if (exp(root, primes.get(currentPrimeIndex), modulo) == 1) {
-                    break;
-                }
-                return root;
-            } while (factorizedRoot > 1);
-        } while (true);
-    }
-
-    protected long nthRootOfUnity(int nth, int modulo) {
-        long primitiveRoot = primitiveRootOfUnity(modulo);
-        return exp(primitiveRoot, (modulo - 1) / nth, modulo);
     }
 
     private long exp(long number, long exponent, long modulo) {
@@ -200,6 +141,7 @@ public class Main {
 
     protected long multiplicativeInverseModulo(long number, long modulo) {
         Matrix2x2 matrix2x2 = new Matrix2x2();
+        long originalModulo = modulo;
         while (number != 0) {
             long factor = modulo / number;
             long oldModulo = modulo;
@@ -207,7 +149,7 @@ public class Main {
             number = oldModulo % number;
             matrix2x2 = matrix2x2.multiply(new Matrix2x2(0, 1, 1, -factor));
         }
-        return matrix2x2.a10;
+        return (matrix2x2.a10 % originalModulo + originalModulo) % originalModulo;
     }
 
     static class Matrix2x2 {
@@ -249,24 +191,25 @@ public class Main {
         long[] evenResults = transform(even, xSquared, modulo);
         long[] oddResults = transform(odd, xSquared, modulo);
         long[] yValues = new long[params.length];
+        long inHalf = exp(x, halfLength, modulo);
         long xPowered = 1;
         for (int i = 0; i < halfLength; i++) {
             yValues[i] = (evenResults[i] + xPowered * oddResults[i]) % modulo;
-            yValues[i + halfLength] = ((evenResults[i] - xPowered * oddResults[i]) % modulo + modulo) % modulo;
+            yValues[i + halfLength] = ((evenResults[i] + inHalf * xPowered % modulo * oddResults[i]) % modulo + modulo) % modulo;
             xPowered = xPowered * x % modulo;
         }
         return yValues;
     }
 
     public long[] inverseTransform(long[] values, long x, long modulo) {
-        long xToMinusOne = exp(x, values.length - 0, modulo);
+        long xToMinusOne = exp(x, values.length - 1, modulo);
         long[] params = transform(values, xToMinusOne, modulo);
 
+        long inverseModulo = multiplicativeInverseModulo(values.length, modulo);
+        assert inverseModulo * values.length % modulo == 1;
+
         for (int i = 0; i < values.length; i++) {
-            if (params[i] % values.length != 0) {
-                throw new RuntimeException("Result cannot be defined!");
-            }
-            params[i] /= values.length;
+            params[i] = params[i] * inverseModulo % modulo;
         }
         return params;
     }
@@ -279,19 +222,47 @@ public class Main {
         return result;
     }
 
+    protected long pow(long n, long exp) {
+        if (exp == 0) {
+            return 1;
+        }
+        long nSquared = pow(n, exp / 2);
+        return nSquared * nSquared * (exp % 2 == 0 ? 1 : n);
+    }
+
     public long[] multiply(long[] numberAAsLong, long[] numberBAsLong) {
         long primitiveRootOfUnity = 440564289;
         long modulo = 2013265921;
-        int resultLength = 1024 * 16;
+        resultLength = resultLength(numberAAsLong.length + numberBAsLong.length);
         long nthRootOfUnity = exp(primitiveRootOfUnity, 1024 * 1024 * 32 * 4 * 15 / resultLength, modulo);
-        assert exp(nthRootOfUnity,resultLength,modulo) == 1;
+        assert exp(nthRootOfUnity, resultLength, modulo) == 1;
         long[] aPadded = pad(numberAAsLong, resultLength);
         long[] bPadded = pad(numberBAsLong, resultLength);
         long[] aTransformed = transform(aPadded, nthRootOfUnity, modulo);
         long[] bTransformed = transform(bPadded, nthRootOfUnity, modulo);
         long[] resultTransformed = multiplyTransformed(aTransformed, bTransformed, modulo);
         long[] result = inverseTransform(resultTransformed, nthRootOfUnity, modulo);
-        return result;
+        return normalize(result);
+    }
+
+    private int resultLength(int i) {
+        i -= 1;
+        int length = 0;
+        while (i > 0) {
+            i >>= 1;
+            ++length;
+        }
+        return 1 << length;
+    }
+
+    private long[] normalize(long[] vector) {
+        long rest = 0;
+        for (int i = 0; i < vector.length; i++) {
+            long nextValue = rest + vector[i];
+            vector[i] = nextValue % tenToBase;
+            rest = nextValue / tenToBase;
+        }
+        return vector;
     }
 
     private long[] pad(long[] number, int resultLength) {
