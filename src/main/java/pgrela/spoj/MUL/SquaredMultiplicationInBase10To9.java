@@ -92,22 +92,23 @@ public class SquaredMultiplicationInBase10To9 {
 
     protected long[] multiply(long[] numberA, int lengthOfNumberAInBase10To9, long[] numberB, int lengthOfNumberBInBase10To9) {
         int resultLength = lengthOfNumberAInBase10To9 + lengthOfNumberBInBase10To9;
+        long[] r = resultAsLong;
         for (int i = 0; i < resultLength; i++) {
-            resultAsLong[i] = 0;
+            r[i] = 0;
         }
         for (int i = 0; i < lengthOfNumberAInBase10To9; ++i) {
             for (int j = 0; j < lengthOfNumberBInBase10To9; ++j) {
                 long singleMultiplicationResult = numberA[i] * numberB[j];
                 int precomputedIndex = i+j;
-                resultAsLong[precomputedIndex] += singleMultiplicationResult % TEN_TO_9;
-                resultAsLong[precomputedIndex + 1] += singleMultiplicationResult / TEN_TO_9;
+                r[precomputedIndex] += singleMultiplicationResult % TEN_TO_9;
+                r[precomputedIndex + 1] += singleMultiplicationResult / TEN_TO_9;
             }
         }
         for (int i = 0; i < resultLength-1; i++) {
-            resultAsLong[i + 1] += resultAsLong[i] / TEN_TO_9;
-            resultAsLong[i] %= TEN_TO_9;
+            r[i + 1] += r[i] / TEN_TO_9;
+            r[i] %= TEN_TO_9;
         }
-        return resultAsLong;
+        return r;
     }
 
     protected int convertToBase10To9(String number, long[] result) {

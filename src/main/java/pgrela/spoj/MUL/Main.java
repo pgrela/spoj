@@ -11,19 +11,18 @@ import java.io.Reader;
 public class Main {
 
     public final long tenToBase;
-    public static final int BASE_EXPONENT = 5;
+    public static final int BASE_EXPONENT = 1;
     public static final int MAX_RESULT_NUMBER_LENGTH = 20000;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
-    private int resultLength;
+    protected int resultLength;
     private final long[] numberAAsLong;
     private final long[] numberBAsLong;
     private final long[] resultAAsLong;
     private final long[] resultBAsLong;
     private final long[] resultTransformed;
     private final char[] reversedResultAsChar;
-    private final int maxNumberLength;
     private static final long MODULO = 2013265921;
     private static final long PRIMITIVE_ROOT_OF_UNITY = 440564289;
 
@@ -36,7 +35,7 @@ public class Main {
         outputStream = new PrintStream(out);
 
         tenToBase = pow(10, BASE_EXPONENT);
-        maxNumberLength = resultLength(MAX_RESULT_NUMBER_LENGTH / BASE_EXPONENT + 1);
+        int maxNumberLength = resultLength(MAX_RESULT_NUMBER_LENGTH / BASE_EXPONENT + 1);
         numberAAsLong = new long[maxNumberLength];
         numberBAsLong = new long[maxNumberLength];
         resultAAsLong = new long[maxNumberLength];
@@ -185,39 +184,67 @@ public class Main {
         }
     }
 
-    public void transform(long[] numberAsLong, long[] results, long x, long modulo, int paramsCount, int paramsOffset, int paramsJump) {
-        if (paramsCount == 1)
-            return;
-
-        int halfCount = paramsCount / 2;
-
+    public long[] transform(long[] params, long x, long modulo, int paramsLength) {
+        if (paramsLength == 1)
+            return params;
+        int halfLength = paramsLength / 2;
+        long[] odd = new long[halfLength];
+        long[] even = new long[halfLength];
+        for (int i = 0; i < halfLength; i++) {
+            even[i] = params[2 * i];
+            odd[i] = params[2 * i + 1];
+        }
         long xSquared = x * x % modulo;
-        int resultsJump = paramsJump * 2;
-        int evenResultsOffset = paramsOffset;
-        int oddResultsOffset = paramsOffset + paramsJump;
-        transform(numberAsLong, results, xSquared, modulo, halfCount, evenResultsOffset, resultsJump);
-        transform(numberAsLong, results, xSquared, modulo, halfCount, oddResultsOffset, resultsJump);
-        long inHalf = exp(x, halfCount, modulo);
+        long[] evenResults = transform(even, xSquared, modulo, halfLength);
+        long[] oddResults = transform(odd, xSquared, modulo, halfLength);
+        long[] yValues = new long[paramsLength];
+        long inHalf = exp(x, halfLength, modulo);
         long xPowered = 1;
-        for (int i = 0; i < halfCount; i++) {
-            int evenIndex = evenResultsOffset + i * resultsJump;
-            int oddIndex = oddResultsOffset + i * resultsJump;
-            results[paramsOffset + i * paramsJump] = (results[evenIndex] + xPowered * results[oddIndex]) % modulo;
-            results[paramsOffset + i * paramsJump + halfCount] = (results[evenIndex] + inHalf * xPowered % modulo * results[oddIndex]) % modulo;
+        for (int i = 0; i < halfLength; i++) {
+            yValues[i] = (evenResults[i] + xPowered * oddResults[i]) % modulo;
+            yValues[i + halfLength] = (evenResults[i] + inHalf * xPowered % modulo * oddResults[i]) % modulo;
             xPowered = xPowered * x % modulo;
         }
+        return yValues;
     }
 
-    public void inverseTransform(long[] values, long x, long modulo) {
-        long xToMinusOne = exp(x, values.length - 1, modulo);
-        transform(numberAAsLong, resultTransformed, xToMinusOne, modulo, resultLength, 0, 1);
-
-        long inverseModulo = multiplicativeInverseModulo(values.length, modulo);
-        assert inverseModulo * values.length % modulo == 1;
-
-        for (int i = 0; i < resultLength; i++) {
-            resultTransformed[i] = resultTransformed[i] * inverseModulo % modulo;
+    public long[] lazyTransform(long[] params, long x, long modulo, int paramsLength, long multiplier) {
+        if (paramsLength == 1) {
+            params[0] = params[0] * multiplier % modulo;
+            return params;
         }
+        int halfLength = paramsLength / 2;
+        long[] odd = new long[halfLength];
+        long[] even = new long[halfLength];
+        for (int i = 0; i < halfLength; i++) {
+            even[i] = params[2 * i];
+            odd[i] = params[2 * i + 1];
+        }
+        long xSquared = x * x % modulo;
+        long inHalf = exp(x, halfLength, modulo);
+        long[] evenResults = lazyTransform(even, xSquared, modulo, halfLength, multiplier);
+        long[] oddResults = lazyTransform(odd, xSquared, modulo, halfLength, multiplier * x % modulo);
+        long[] oddResultsInHalf = lazyTransform(odd, xSquared, modulo, halfLength,
+                multiplier * x % modulo * inHalf % modulo);
+        long[] yValues = new long[paramsLength];
+        for (int i = 0; i < halfLength; i++) {
+            yValues[i] = evenResults[i] + oddResults[i];
+            yValues[i + halfLength] = evenResults[i] + oddResultsInHalf[i];
+        }
+        return yValues;
+    }
+
+    public long[] inverseTransform(long[] values, long x, long modulo) {
+        long xToMinusOne = exp(x, resultLength - 1, modulo);
+        long inverseModulo = multiplicativeInverseModulo(resultLength, modulo);
+        assert inverseModulo * resultLength % modulo == 1;
+        for (int i = 0; i < resultLength; i++) {
+            values[i] = values[i] * inverseModulo % modulo;
+        }
+        long[] resultTransformed = lazyTransform(values, xToMinusOne, modulo, resultLength,1);
+
+
+        return resultTransformed;
     }
 
     public void multiplyTransformedAndStoreInFirstArgumentArray(long[] numberAAsLong, long[] numberBAsLong, int resultLength, long modulo) {
@@ -238,11 +265,11 @@ public class Main {
 
         long nthRootOfUnity = exp(PRIMITIVE_ROOT_OF_UNITY, 1024 * 1024 * 32 * 4 * 15 / resultLength, MODULO);
         assert exp(nthRootOfUnity, resultLength, MODULO) == 1;
-        transform(numberAAsLong, resultAAsLong, nthRootOfUnity, MODULO, resultLength, 0, 1);
-        transform(numberBAsLong, resultBAsLong, nthRootOfUnity, MODULO, resultLength, 0, 1);
+        long[] resultAAsLong = transform(numberAAsLong, nthRootOfUnity, MODULO, resultLength);
+        long[] resultBAsLong = transform(numberBAsLong, nthRootOfUnity, MODULO, resultLength);
         multiplyTransformedAndStoreInFirstArgumentArray(resultAAsLong, resultBAsLong, resultLength, MODULO);
-        inverseTransform(resultAAsLong, nthRootOfUnity, MODULO);
-        return normalize(resultTransformed);
+        long[] resultTransformed = inverseTransform(resultAAsLong, nthRootOfUnity, MODULO);
+        return normalize(resultTransformed, resultLength);
     }
 
     private int resultLength(int i) {
@@ -255,10 +282,10 @@ public class Main {
         return 1 << length;
     }
 
-    private long[] normalize(long[] vector) {
+    private long[] normalize(long[] vector, int resultLength) {
         long rest = 0;
-        for (int i = 0; i < vector.length; i++) {
-            long nextValue = rest + vector[i];
+        for (int i = 0; i < resultLength; i++) {
+            long nextValue = rest + vector[i];//%MODULO;
             vector[i] = nextValue % tenToBase;
             rest = nextValue / tenToBase;
         }
