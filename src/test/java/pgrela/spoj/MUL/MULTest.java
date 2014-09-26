@@ -46,7 +46,8 @@ public class MULTest extends AbstractMainTest{
         //given
 
         //when
-        long[] computedResult = mainClassFactory.getMain(Main.class).convertToBase("1234123456789123456789", 9);
+        long[] computedResult = new long[100];
+        mainClassFactory.getMain(Main.class).convertToBase("1234123456789123456789", 9, computedResult);
 
         Assertions.assertThat(computedResult).startsWith(123456789, 123456789, 1234);
     }
