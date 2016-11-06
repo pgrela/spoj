@@ -11,13 +11,13 @@ import java.util.Arrays;
 
 public class Main {
 
-    public final long tenToBase;
-    public static final int BASE_EXPONENT = 1;
+    public static final int BASE_EXPONENT = 3;
+    public static final long TEN_TO_BASE = pow(10, BASE_EXPONENT);
     public static final int MAX_RESULT_NUMBER_LENGTH = 20000;
     protected final BufferedReader inputStream;
     protected final PrintStream outputStream;
 
-    protected int resultLength=0;
+    protected int resultLength = 0;
     private final long[] numberAAsLong;
     private final long[] numberBAsLong;
     private final char[] reversedResultAsChar;
@@ -32,7 +32,6 @@ public class Main {
         inputStream = new BufferedReader(inputStreamReader);
         outputStream = new PrintStream(out);
 
-        tenToBase = pow(10, BASE_EXPONENT);
         int maxNumberLength = resultLength(MAX_RESULT_NUMBER_LENGTH / BASE_EXPONENT + 1);
         numberAAsLong = new long[maxNumberLength];
         numberBAsLong = new long[maxNumberLength];
@@ -67,10 +66,10 @@ public class Main {
         long[] resultInBase = multiply(numberAAsLong, numberBAsLong);
         char[] charArray = convertToCharArray(resultInBase, resultIsPositive);
 
-        if(charArray.length==2&&charArray[0]=='-'&& charArray[1]=='0'){
+        if (charArray.length == 2 && charArray[0] == '-' && charArray[1] == '0') {
             return "0".toCharArray();
-        }                          else
-        return charArray;
+        } else
+            return charArray;
     }
 
     private int resultLength(String numberA, String numberB) {
@@ -111,7 +110,7 @@ public class Main {
     }
 
     protected void convertToBase(String number, int chunkSize, long[] resultPointer) {
-        Arrays.fill(resultPointer,0L);
+        Arrays.fill(resultPointer, 0L);
         char[] numberAsCharArray = number.toCharArray();
         reverse(numberAsCharArray);
         int digitsInBase = (numberAsCharArray.length + chunkSize - 1) / chunkSize;
@@ -188,7 +187,7 @@ public class Main {
     public long[] transform(long[] params, long x, long modulo, int paramsLength) {
         if (paramsLength == 1)
             return params;
-        int halfLength = paramsLength/2;
+        int halfLength = paramsLength / 2;
         long[] odd = new long[halfLength];
         long[] even = new long[halfLength];
         for (int i = 0; i < halfLength; i++) {
@@ -209,53 +208,14 @@ public class Main {
         return yValues;
     }
 
-    public long[] lazyTransform(long[] params, long x, long modulo, int paramsLength, long multiplier) {
-        if(1==1){
-            long[] r=new long[paramsLength];
-            long xX=1;
-            for (int i = 0; i < paramsLength; i++) {
-                r[i]=(xX*params[i])%modulo;
-                xX=xX*x%modulo;
-            }
-            return r;
-        }
-        if (paramsLength == 1) {
-            params[0] = params[0] * multiplier % modulo;
-            return params;
-        }
-        int halfLength = paramsLength / 2;
-        long[] odd = new long[halfLength];
-        long[] even = new long[halfLength];
-        for (int i = 0; i < halfLength; i++) {
-            even[i] = params[2 * i];
-            odd[i] = params[2 * i + 1];
-        }
-        long xSquared = x * x % modulo;
-        long inHalf = exp(x, halfLength, modulo);
-        long[] evenResults = lazyTransform(even, xSquared, modulo, halfLength, multiplier);
-        long[] oddResults = lazyTransform(odd, xSquared, modulo, halfLength, multiplier * x % modulo);
-        long[] oddResultsInHalf = lazyTransform(odd, xSquared, modulo, halfLength,
-                multiplier * x % modulo * inHalf % modulo);
-        long[] yValues = new long[paramsLength];
-        for (int i = 0; i < halfLength; i++) {
-            yValues[i] = evenResults[i] + oddResults[i];
-            yValues[i + halfLength] = evenResults[i] + oddResultsInHalf[i];
-        }
-        return yValues;
-    }
-
     public long[] inverseTransform(long[] values, long x, long modulo) {
         long xToMinusOne = exp(x, resultLength - 1, modulo);
-        assert xToMinusOne*x%modulo==1;
         long inverseModulo = multiplicativeInverseModulo(resultLength, modulo);
-        assert inverseModulo * resultLength % modulo == 1;
         for (int i = 0; i < resultLength; i++) {
             values[i] = values[i] * inverseModulo % modulo;
         }
-        long[] resultTransformed = transform(values, xToMinusOne, modulo, resultLength);
 
-
-        return resultTransformed;
+        return transform(values, xToMinusOne, modulo, resultLength);
     }
 
     public void multiplyTransformedAndStoreInFirstArgumentArray(long[] numberAAsLong, long[] numberBAsLong, int resultLength, long modulo) {
@@ -264,7 +224,7 @@ public class Main {
         }
     }
 
-    protected long pow(long n, long exp) {
+    protected static long pow(long n, long exp) {
         if (exp == 0) {
             return 1;
         }
@@ -273,15 +233,14 @@ public class Main {
     }
 
     public long[] multiply(long[] numberAAsLong, long[] numberBAsLong) {
-        if(resultLength==0){
-            resultLength=resultLength(
+        if (resultLength == 0) {
+            resultLength = resultLength(
                     ((numberAAsLong.length + BASE_EXPONENT - 1) / BASE_EXPONENT)
                             + ((numberBAsLong.length + BASE_EXPONENT - 1) / BASE_EXPONENT)
             );
         }
 
         long nthRootOfUnity = exp(PRIMITIVE_ROOT_OF_UNITY, 1024 * 1024 * 32 * 4 * 15 / resultLength, MODULO);
-        //assert exp(PRIMITIVE_ROOT_OF_UNITY, 1024 * 1024 * 32 * 4 * 15 / 8, MODULO)==MODULO-exp(exp(PRIMITIVE_ROOT_OF_UNITY, 1024 * 1024 * 32 * 4 * 15 / 8, MODULO),5,MODULO);
         assert exp(nthRootOfUnity, resultLength, MODULO) == 1;
         long[] resultAAsLong = transform(numberAAsLong, nthRootOfUnity, MODULO, resultLength);
         long[] resultBAsLong = transform(numberBAsLong, nthRootOfUnity, MODULO, resultLength);
@@ -303,9 +262,9 @@ public class Main {
     private long[] normalize(long[] vector, int resultLength) {
         long rest = 0;
         for (int i = 0; i < resultLength; i++) {
-            long nextValue = rest + vector[i];//%MODULO;
-            vector[i] = nextValue % tenToBase;
-            rest = nextValue / tenToBase;
+            long nextValue = rest + vector[i];
+            vector[i] = nextValue % TEN_TO_BASE;
+            rest = nextValue / TEN_TO_BASE;
         }
         return vector;
     }
